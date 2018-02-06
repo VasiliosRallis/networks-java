@@ -11,8 +11,10 @@ import common.MessageInfo;
 
 public class RMIClient {
 
-
-	private static double	execution = 0;
+    //Calculate the ammount of time spent sending messages
+    //Because this is a TCP/IP connection this will also include the time 
+    //for the server the receive the message and aknowledge the receipt of the message
+	private static double execution = 0;
 
 	public static void main(String[] args) {
 
@@ -26,42 +28,35 @@ public class RMIClient {
 
 		String urlServer = new String("rmi://" + args[0] + "/RMIServer");
 		int numMessages = Integer.parseInt(args[1]);
-
+        
+        //Initialize the security manager
 		if(System.getSecurityManager() == null) {
-
-			System.setSecurityManager(new SecurityManager());	// TO-DO: Initialise Security Manager
-		
+			System.setSecurityManager(new SecurityManager());
 		}						
 
 		try {
+		    //Get reference ot RMIServer stub from the remote registry
+		    //Note the cast to in interface since the client interacts with the interface
 		 	iRMIServer = (RMIServerI) Naming.lookup(urlServer);
 
 		 	for(int i = 0; i < numMessages; i++) {
 				//String message = new String( (Integer.toString(numMessages)) + ";" + (Integer.toString(i)) );
 				MessageInfo msg = new MessageInfo(numMessages,i);
-				try{
-					long startTime = System.nanoTime();   //Start timer
-					iRMIServer.receiveMessage(msg);
-					long endTime = System.nanoTime();    //Stop timer
-					execution += ((endTime - startTime) / 1000000.0);//Append to a variable
-				}
-				catch (RemoteException e) {
-				     e.printStackTrace();
-				}
-			}							// TO-DO: Bind to RMIServer
-
-
-										// TO-DO: Attempt to send messages the specified number of times
-
+				
+		        //Start timer
+			    long startTime = System.nanoTime();
+			    //Send message
+			    iRMIServer.receiveMessage(msg);
+                //Stop timer
+			    long endTime = System.nanoTime();
+			    //Convert to milliseconds 
+			    execution += ((endTime - startTime) / 1000000.0);
+			}
 		}
-
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		System.out.println("Time = " + execution);
-
-	}
-
-	
+	}	
 }

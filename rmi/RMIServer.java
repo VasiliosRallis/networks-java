@@ -19,59 +19,57 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 	private int[] receivedMessages;
 	private int messagesReceived = 0;
 
+    //Since RMIServer implements a remote interface, it's constructor must throw a RemoteException
+    public RMIServer() throws RemoteException{}
 
-
-	public RMIServer() throws RemoteException {
-	}
-
-	public static void main(String[] args) {
+	public static void main(String[] args){
 
 		RMIServer rmis = null;
 
-		if(System.getSecurityManager() == null) {
-
-			System.setSecurityManager(new SecurityManager());	// TO-DO: Initialise Security Manager
-		
+        //Initialize new security manager
+		if(System.getSecurityManager() == null){
+			System.setSecurityManager(new SecurityManager());
 		}						
 
-		String serverURL = new String("rmi://localhost/RMIServer");	// TO-DO: Instantiate the server class
+		String serverURL = new String("rmi://localhost/RMIServer");
 
 		try {
+		    //Construct the server
 			rmis = new RMIServer();
+			
+			//Bind the rerver to RMI registry
 			rebindServer(serverURL, rmis);
 			System.out.println("Server ready");
-
 		}
 		catch (RemoteException e) {
 			e.printStackTrace();
-		}								// TO-DO: Bind to RMI registry
-
+		}
 	}
 
 
 	public void receiveMessage(MessageInfo message) throws RemoteException {
 	
-
-		if (totalMessages == -1){					// TO-DO: Use the data to construct a new MessageInfo object
+	    //On receipt of first message, initialise the receive buffer
+		if (totalMessages == -1){
 			totalMessages = message.totalMessages;
 			receivedMessages = new int[totalMessages];
 		}
 
+        //Log the receipt of the message
 		messagesReceived++;
 		receivedMessages[message.messageNum] = 1;
 
+        //Messages are in order (TCP/IP). If the last message is received, all the messages have been received
 		if(message.messageNum == totalMessages - 1){
 			msg_log();
 		}			
-										// TO-DO: On receipt of first message, initialise the receive buffer
-			
-		
 	}
 
 	public void msg_log() {
 		int lost = totalMessages - messagesReceived;
 
-		if(lost > 0){						// TO-DO: Log results of the messages
+        //Print any lost messages
+		if(lost > 0){
 			System.out.println("The missing message numbers are: ");
 
 			for (int i=0; i < receivedMessages.length; ++i) {	
@@ -81,7 +79,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
 			}
 			System.out.println();
-			System.out.println(lost + "/" + totalMessages + " messages have been lost!");
+			System.out.println(messagesReceived + "/" + totalMessages + " messages have been received!");
 		}
 		else{
 			System.out.println();
@@ -94,29 +92,14 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 	protected static void rebindServer(String serverURL, RMIServer server) {
 
 		try {
+		    //Construct a registry on the localhost the listens to the specific port
 			LocateRegistry.createRegistry(1099);
-		} 
-		catch (RemoteException e) {
-			e.printStackTrace();
-		}								// TO-DO:
-										// Start / find the registry (hint use LocateRegistry.createRegistry(...)
-		try {										//Naming.bind(serverURL, new RMIServer());
+			
+			//Rebing the serverURL to the remote object
 			Naming.rebind(serverURL, server);
-
 		} 
-		
-		catch (RemoteException e) {
-			e.printStackTrace();
-		} 
-
-		catch (MalformedURLException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
-
-										// If we *know* the registry is running we could skip this (eg run rmiregistry in the start script)
-										// TO-DO:
-									// Now rebind the server to the registry (rebind replaces any existing servers bound to the serverURL)
-										// Note - Registry.rebind (as returned by createRegistry / getRegistry) does something similar but
-									// expects different things from the URL field.
 	}
 }
