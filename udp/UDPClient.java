@@ -1,6 +1,3 @@
-/*
- * Created on 01-Mar-2016
- */
 package udp;
 
 import java.io.IOException;
